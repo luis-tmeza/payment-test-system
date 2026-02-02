@@ -1,48 +1,60 @@
-# frontend
+# Payment Test Frontend
 
-This template should help get you started developing with Vue 3 in Vite.
+Frontend del flujo de pagos construido con Vue 3 + Vite + Vuex + Vuetify.
 
-## Recommended IDE Setup
+## Requisitos
 
-[VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+- Node.js 20.19+ o 22.12+
+- npm 10+
 
-## Recommended Browser Setup
+## Configuracion de entorno
 
-- Chromium-based browsers (Chrome, Edge, Brave, etc.):
-  - [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd)
-  - [Turn on Custom Object Formatter in Chrome DevTools](http://bit.ly/object-formatters)
-- Firefox:
-  - [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)
-  - [Turn on Custom Object Formatter in Firefox DevTools](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
+Este proyecto usa Vite y variables con prefijo `VITE_`.
 
-## Type Support for `.vue` Imports in TS
+Ejemplo (produccion):
 
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
+```
+VITE_API_BASE_URL=https://payment-test-system-production.up.railway.app
+```
 
-## Customize configuration
+Para desarrollo local, crea un archivo `.env.local`:
 
-See [Vite Configuration Reference](https://vite.dev/config/).
+```
+VITE_API_BASE_URL=http://localhost:3000
+```
 
-## Project Setup
+Tambien tienes un ejemplo en `.env.example`.
 
-```sh
+## Instalacion
+
+```
 npm install
 ```
 
-### Compile and Hot-Reload for Development
+## Comandos utiles
 
-```sh
+```
 npm run dev
-```
-
-### Type-Check, Compile and Minify for Production
-
-```sh
 npm run build
-```
-
-### Lint with [ESLint](https://eslint.org/)
-
-```sh
+npm run preview
 npm run lint
 ```
+
+## Estructura rapida
+
+- `src/api/` clientes HTTP (axios)
+- `src/store/` estado global (Vuex)
+- `src/views/` pantallas
+- `src/components/` componentes reutilizables
+- `src/utils/` utilidades
+
+## Despliegue en Vercel
+
+1) En Vercel, crea la variable de entorno:
+   - `VITE_API_BASE_URL` = `https://payment-test-system-production.up.railway.app`
+2) Ejecuta un nuevo deploy para que el build tome la variable.
+
+## Notas
+
+- La URL del backend se configura solo por variable de entorno.
+- Si cambias rutas del backend, actualiza `VITE_API_BASE_URL`.
