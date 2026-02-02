@@ -55,7 +55,7 @@ export class PaymentsService {
       throw new Error('WOMPI_INTEGRITY_KEY is not configured');
     }
 
-    const raw = `${amountInCents}${currency}${reference}${integrityKey}`;
+    const raw = `${reference}${amountInCents}${currency}${integrityKey}`;
 
     return createHash('sha256').update(raw).digest('hex');
   }
@@ -96,6 +96,7 @@ export class PaymentsService {
       'COP',
       params.reference,
     );
+
     const response = await axios.post<WompiTransactionResponse>(
       `${baseUrl}/transactions`,
       {
