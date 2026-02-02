@@ -1,8 +1,8 @@
 import { DataSource } from 'typeorm';
-import { Product } from '../modules/products/product.entity';
+import { ProductEntity } from '../infrastructure/database/entities/product.entity';
 
 export async function seedProducts(dataSource: DataSource) {
-  const productRepository = dataSource.getRepository(Product);
+  const productRepository = dataSource.getRepository(ProductEntity);
 
   const count = await productRepository.count();
   if (count > 0) {
