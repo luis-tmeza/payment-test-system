@@ -1,37 +1,183 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import 'reflect-metadata';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { TransactionsService } from './transactions.service';
-import { CreatePendingTransactionUseCase } from '../../domain/usecase/create-pending-transaction.usecase';
-import { CreateTransactionUseCase } from '../../domain/usecase/create-transaction.usecase';
-import { MarkTransactionFailedUseCase } from '../../domain/usecase/mark-transaction-failed.usecase';
-import { UpdateWompiReferenceUseCase } from '../../domain/usecase/update-wompi-reference.usecase';
+import { NotFoundError } from '../../domain/errors/not-found.error';
+import { ValidationError } from '../../domain/errors/validation.error';
 
 describe('TransactionsService', () => {
-  let service: TransactionsService;
+  it('creates a transaction when successful', async () => {
+    const createTransactionUseCase = {
+      execute: jest.fn().mockResolvedValue({
+        ok: true,
+        value: { id: 'tx-1' },
+      }),
+    };
+    const service = new TransactionsService(
+      createTransactionUseCase as any,
+      { execute: jest.fn() } as any,
+      { execute: jest.fn() } as any,
+      { execute: jest.fn() } as any,
+    );
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        TransactionsService,
-        { provide: CreateTransactionUseCase, useValue: { execute: jest.fn() } },
-        {
-          provide: CreatePendingTransactionUseCase,
-          useValue: { execute: jest.fn() },
-        },
-        {
-          provide: UpdateWompiReferenceUseCase,
-          useValue: { execute: jest.fn() },
-        },
-        {
-          provide: MarkTransactionFailedUseCase,
-          useValue: { execute: jest.fn() },
-        },
-      ],
-    }).compile();
-
-    service = module.get<TransactionsService>(TransactionsService);
+    await expect(service.create('p-1', 1)).resolves.toEqual({ id: 'tx-1' });
   });
 
-  it('should be defined', () => {
-    expect(service).toBeDefined();
+  it('maps not found errors to NotFoundException', async () => {
+    const createTransactionUseCase = {
+      execute: jest.fn().mockResolvedValue({
+        ok: false,
+        error: new NotFoundError('missing'),
+      }),
+    };
+    const service = new TransactionsService(
+      createTransactionUseCase as any,
+      { execute: jest.fn() } as any,
+      { execute: jest.fn() } as any,
+      { execute: jest.fn() } as any,
+    );
+
+    await expect(service.create('p-1', 1)).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
+  });
+
+  it('maps validation errors to BadRequestException', async () => {
+    const createTransactionUseCase = {
+      execute: jest.fn().mockResolvedValue({
+        ok: false,
+        error: new ValidationError('bad'),
+      }),
+    };
+    const service = new TransactionsService(
+      createTransactionUseCase as any,
+      { execute: jest.fn() } as any,
+      { execute: jest.fn() } as any,
+      { execute: jest.fn() } as any,
+    );
+
+    await expect(service.create('p-1', 1)).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
+  });
+
+  it('rethrows unknown create errors', async () => {
+    const error = new Error('boom');
+    const createTransactionUseCase = {
+      execute: jest.fn().mockResolvedValue({ ok: false, error }),
+    };
+    const service = new TransactionsService(
+      createTransactionUseCase as any,
+      { execute: jest.fn() } as any,
+      { execute: jest.fn() } as any,
+      { execute: jest.fn() } as any,
+    );
+
+    await expect(service.create('p-1', 1)).rejects.toBe(error);
+  });
+
+  it('creates a pending transaction', async () => {
+    const createPendingUseCase = {
+      execute: jest.fn().mockResolvedValue({
+        ok: true,
+        value: { id: 'pending' },
+      }),
+    };
+    const service = new TransactionsService(
+      { execute: jest.fn() } as any,
+      createPendingUseCase as any,
+      { execute: jest.fn() } as any,
+      { execute: jest.fn() } as any,
+    );
+
+    await expect(service.createPending('p-1', 1, 100)).resolves.toEqual({
+      id: 'pending',
+    });
+  });
+
+  it('rethrows createPending errors', async () => {
+    const error = new Error('fail');
+    const createPendingUseCase = {
+      execute: jest.fn().mockResolvedValue({ ok: false, error }),
+    };
+    const service = new TransactionsService(
+      { execute: jest.fn() } as any,
+      createPendingUseCase as any,
+      { execute: jest.fn() } as any,
+      { execute: jest.fn() } as any,
+    );
+
+    await expect(service.createPending('p-1', 1, 100)).rejects.toBe(error);
+  });
+
+  it('updates the wompi reference', async () => {
+    const updateWompiReferenceUseCase = {
+      execute: jest.fn().mockResolvedValue({ ok: true, value: undefined }),
+    };
+    const service = new TransactionsService(
+      { execute: jest.fn() } as any,
+      { execute: jest.fn() } as any,
+      updateWompiReferenceUseCase as any,
+      { execute: jest.fn() } as any,
+    );
+
+    await expect(
+      service.updateWompiReference('tx-1', 'ref-1'),
+    ).resolves.toBeUndefined();
+  });
+
+  it('rethrows updateWompiReference errors', async () => {
+    const error = new Error('fail');
+    const updateWompiReferenceUseCase = {
+      execute: jest.fn().mockResolvedValue({ ok: false, error }),
+    };
+    const service = new TransactionsService(
+      { execute: jest.fn() } as any,
+      { execute: jest.fn() } as any,
+      updateWompiReferenceUseCase as any,
+      { execute: jest.fn() } as any,
+    );
+
+    await expect(
+      service.updateWompiReference('tx-1', 'ref-1'),
+    ).rejects.toBe(error);
+  });
+
+  it('marks a transaction as failed', async () => {
+    const markTransactionFailedUseCase = {
+      execute: jest.fn().mockResolvedValue({ ok: true, value: undefined }),
+    };
+    const service = new TransactionsService(
+      { execute: jest.fn() } as any,
+      { execute: jest.fn() } as any,
+      { execute: jest.fn() } as any,
+      markTransactionFailedUseCase as any,
+    );
+
+    await expect(service.markAsFailed('tx-1')).resolves.toBeUndefined();
+  });
+
+  it('rethrows markAsFailed errors', async () => {
+    const error = new Error('fail');
+    const markTransactionFailedUseCase = {
+      execute: jest.fn().mockResolvedValue({ ok: false, error }),
+    };
+    const service = new TransactionsService(
+      { execute: jest.fn() } as any,
+      { execute: jest.fn() } as any,
+      { execute: jest.fn() } as any,
+      markTransactionFailedUseCase as any,
+    );
+
+    await expect(service.markAsFailed('tx-1')).rejects.toBe(error);
+  });
+
+  it('loads decorators when Reflect is missing', () => {
+    const originalReflect = (global as { Reflect?: unknown }).Reflect;
+    (global as { Reflect?: unknown }).Reflect = undefined;
+    jest.isolateModules(() => {
+      const module = require('./transactions.service');
+      expect(module.TransactionsService).toBeDefined();
+    });
+    (global as { Reflect?: unknown }).Reflect = originalReflect;
   });
 });

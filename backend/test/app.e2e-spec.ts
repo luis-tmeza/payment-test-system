@@ -1,19 +1,31 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
+import { DataSource } from 'typeorm';
 import request from 'supertest';
 import { App } from 'supertest/types';
 import { AppModule } from './../src/app.module';
 
 describe('AppController (e2e)', () => {
   let app: INestApplication<App>;
+  let moduleRef: TestingModule;
+  let dataSource: DataSource | undefined;
 
-  beforeEach(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
+  beforeAll(async () => {
+    moduleRef = await Test.createTestingModule({
       imports: [AppModule],
     }).compile();
 
-    app = moduleFixture.createNestApplication();
+    app = moduleRef.createNestApplication();
     await app.init();
+    dataSource = moduleRef.get(DataSource);
+  });
+
+  afterAll(async () => {
+    await app?.close();
+    if (dataSource?.isInitialized) {
+      await dataSource.destroy();
+    }
+    await moduleRef?.close?.();
   });
 
   it('/ (GET)', () => {
