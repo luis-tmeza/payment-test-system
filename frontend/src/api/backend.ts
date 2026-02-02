@@ -12,9 +12,7 @@ const readViteEnv = () => {
   }
 };
 
-const envBaseUrl =
-  (typeof process !== 'undefined' && process.env.VITE_API_BASE_URL) ||
-  readViteEnv();
+const envBaseUrl = readViteEnv();
 
 export const api = axios.create({
   baseURL: envBaseUrl ?? 'http://localhost:3000',
