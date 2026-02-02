@@ -20,7 +20,7 @@ const payment = computed(
 const BASE_FEE = 3000;
 const DELIVERY_FEE = 5000;
 
-const quantity = computed(() => 1); // luego se puede mover a Vuex
+const quantity = computed(() => payment.value.quantity);
 
 const subtotal = computed(() =>
   product.value ? product.value.price * quantity.value : 0,
@@ -37,11 +37,15 @@ onMounted(() => {
 });
 
 const confirmPayment = async () => {
-  await store.dispatch('payment/pay', {
+  await store.dispatch('payment/confirmPayment', {
     productId: product.value!.id,
     quantity: payment.value.quantity,
     email: payment.value.email,
     cardToken: payment.value.cardToken,
+    subtotal: subtotal.value,
+    total: total.value,
+    baseFee: BASE_FEE,
+    deliveryFee: DELIVERY_FEE,
   });
 
   router.push('/result');

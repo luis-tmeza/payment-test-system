@@ -31,18 +31,18 @@ const openCardModal = () => {
 
 const onCardTokenized = (token: string) => {
   // Guardamos el token en Vuex
-  store.commit('payment/SET_CARD_TOKEN', token);
+  store.dispatch('payment/setCardToken', token);
 
   // Navegamos al resumen
   router.push('/summary');
 };
 
 watch(email, (val) => {
-  store.commit('payment/SET_EMAIL', val);
+  store.dispatch('payment/setEmail', val);
 });
 
 watch(quantity, (val) => {
-  store.commit('payment/SET_QUANTITY', val);
+  store.dispatch('payment/setQuantity', val);
 });
 </script>
 
