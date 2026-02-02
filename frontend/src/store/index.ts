@@ -1,18 +1,13 @@
 
 
 import { createStore } from 'vuex';
+import type { Plugin } from 'vuex';
 import payment from './modules/payment';
 import products from './modules/products';
 
 const PAYMENT_TX_KEY = 'payment_transaction';
 
-const paymentPersistence = (store: {
-  state: { payment: { transaction: unknown } };
-  subscribe: (
-    fn: (mutation: { type: string }, state: unknown) => void,
-  ) => void;
-  commit: (type: string, payload: unknown) => void;
-}) => {
+const paymentPersistence: Plugin<unknown> = (store) => {
   if (typeof window === 'undefined' || !window.localStorage) {
     return;
   }
@@ -26,13 +21,14 @@ const paymentPersistence = (store: {
     }
   }
 
-  store.subscribe((mutation, state: { payment: { transaction: unknown } }) => {
+  store.subscribe((mutation, state) => {
     if (!mutation.type.startsWith('payment/')) {
       return;
     }
+    const typedState = state as { payment: { transaction: unknown } };
     window.localStorage.setItem(
       PAYMENT_TX_KEY,
-      JSON.stringify(state.payment.transaction),
+      JSON.stringify(typedState.payment.transaction),
     );
   });
 };
