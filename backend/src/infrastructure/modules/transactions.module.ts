@@ -9,6 +9,7 @@ import { TransactionRepositoryAdapter } from '../database/repositories/transacti
 import { CreatePendingTransactionUseCase } from '../../domain/usecase/create-pending-transaction.usecase';
 import { CreateTransactionUseCase } from '../../domain/usecase/create-transaction.usecase';
 import { MarkTransactionFailedUseCase } from '../../domain/usecase/mark-transaction-failed.usecase';
+import { UpdateTransactionStatusUseCase } from '../../domain/usecase/update-transaction-status.usecase';
 import { UpdateWompiReferenceUseCase } from '../../domain/usecase/update-wompi-reference.usecase';
 import { ProductsModule } from './products.module';
 
@@ -47,6 +48,18 @@ import { ProductsModule } from './products.module';
       useFactory: (transactionRepository: TransactionRepositoryAdapter) =>
         new MarkTransactionFailedUseCase(transactionRepository),
       inject: [TransactionRepositoryAdapter],
+    },
+    {
+      provide: UpdateTransactionStatusUseCase,
+      useFactory: (
+        productRepository: ProductRepositoryAdapter,
+        transactionRepository: TransactionRepositoryAdapter,
+      ) =>
+        new UpdateTransactionStatusUseCase(
+          productRepository,
+          transactionRepository,
+        ),
+      inject: [ProductRepositoryAdapter, TransactionRepositoryAdapter],
     },
   ],
   exports: [TransactionsService, TransactionRepositoryAdapter],

@@ -38,7 +38,26 @@ npm run dev
 npm run build
 npm run preview
 npm run lint
+npm test
 ```
+
+## Pruebas y cobertura (frontend)
+
+Fecha de ejecucion: 2026-02-02
+
+Comandos ejecutados:
+- `npm test`
+
+Resultado:
+- Test suites: 14 passed, 14 total
+- Tests: 43 passed, 43 total
+- Fallos: ninguno
+
+Cobertura (Jest --coverage):
+- Statements: 89.88%
+- Branches: 80.53%
+- Functions: 90%
+- Lines: 91.54%
 
 ## Estructura rapida
 

@@ -27,6 +27,30 @@ describe('TransactionsController', () => {
     ).rejects.toBe(error);
   });
 
+  it('updates a transaction status through the service', async () => {
+    const service = {
+      updateStatus: jest.fn().mockResolvedValue(undefined),
+    };
+    const controller = new TransactionsController(service as any);
+
+    await expect(
+      controller.updateStatus('tx-1', { status: 'APPROVED' as any }),
+    ).resolves.toBeUndefined();
+    expect(service.updateStatus).toHaveBeenCalledWith('tx-1', 'APPROVED');
+  });
+
+  it('propagates updateStatus errors', async () => {
+    const error = new Error('fail');
+    const service = {
+      updateStatus: jest.fn().mockRejectedValue(error),
+    };
+    const controller = new TransactionsController(service as any);
+
+    await expect(
+      controller.updateStatus('tx-1', { status: 'APPROVED' as any }),
+    ).rejects.toBe(error);
+  });
+
   it('loads decorators when Reflect is missing', () => {
     const originalReflect = (global as { Reflect?: unknown }).Reflect;
     (global as { Reflect?: unknown }).Reflect = undefined;

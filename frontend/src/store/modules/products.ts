@@ -13,12 +13,14 @@ interface ProductsState {
   items: Product[];
   selected: Product | null;
   loading: boolean;
+  error: string | null;
 }
 
 const state = (): ProductsState => ({
   items: [],
   selected: null,
   loading: false,
+  error: null,
 });
 
 const mutations = {
@@ -31,6 +33,9 @@ const mutations = {
   SET_LOADING(state: ProductsState, value: boolean) {
     state.loading = value;
   },
+  SET_ERROR(state: ProductsState, error: string | null) {
+    state.error = error;
+  },
 };
 
 const actions = {
@@ -38,9 +43,15 @@ const actions = {
     { commit }: ActionContext<ProductsState, unknown>,
   ) {
     commit('SET_LOADING', true);
-    const response = await api.get('/products');
-    commit('SET_PRODUCTS', response.data);
-    commit('SET_LOADING', false);
+    commit('SET_ERROR', null);
+    try {
+      const response = await api.get('/products');
+      commit('SET_PRODUCTS', response.data);
+    } catch {
+      commit('SET_ERROR', 'No se pudieron cargar los productos. Intenta de nuevo.');
+    } finally {
+      commit('SET_LOADING', false);
+    }
   },
 
   selectProduct(
@@ -57,4 +68,3 @@ export default {
   mutations,
   actions,
 };
-

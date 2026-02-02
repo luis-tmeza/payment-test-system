@@ -4,6 +4,7 @@ import { TransactionsModule } from './transactions.module';
 import { CreatePendingTransactionUseCase } from '../../domain/usecase/create-pending-transaction.usecase';
 import { CreateTransactionUseCase } from '../../domain/usecase/create-transaction.usecase';
 import { MarkTransactionFailedUseCase } from '../../domain/usecase/mark-transaction-failed.usecase';
+import { UpdateTransactionStatusUseCase } from '../../domain/usecase/update-transaction-status.usecase';
 import { UpdateWompiReferenceUseCase } from '../../domain/usecase/update-wompi-reference.usecase';
 import { ProductRepositoryAdapter } from '../database/repositories/product.repository';
 import { TransactionRepositoryAdapter } from '../database/repositories/transaction.repository';
@@ -30,6 +31,9 @@ describe('TransactionsModule', () => {
     const markProvider = providers.find(
       (provider) => provider.provide === MarkTransactionFailedUseCase,
     );
+    const updateStatusProvider = providers.find(
+      (provider) => provider.provide === UpdateTransactionStatusUseCase,
+    );
 
     const createUseCase = createProvider.useFactory(
       productRepository,
@@ -39,6 +43,10 @@ describe('TransactionsModule', () => {
       createPendingProvider.useFactory(transactionRepository);
     const updateUseCase = updateProvider.useFactory(transactionRepository);
     const markUseCase = markProvider.useFactory(transactionRepository);
+    const updateStatusUseCase = updateStatusProvider.useFactory(
+      productRepository,
+      transactionRepository,
+    );
 
     expect(createUseCase).toBeInstanceOf(CreateTransactionUseCase);
     expect(createPendingUseCase).toBeInstanceOf(
@@ -46,5 +54,6 @@ describe('TransactionsModule', () => {
     );
     expect(updateUseCase).toBeInstanceOf(UpdateWompiReferenceUseCase);
     expect(markUseCase).toBeInstanceOf(MarkTransactionFailedUseCase);
+    expect(updateStatusUseCase).toBeInstanceOf(UpdateTransactionStatusUseCase);
   });
 });

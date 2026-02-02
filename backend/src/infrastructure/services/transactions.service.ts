@@ -4,7 +4,9 @@ import { ValidationError } from '../../domain/errors/validation.error';
 import { CreatePendingTransactionUseCase } from '../../domain/usecase/create-pending-transaction.usecase';
 import { CreateTransactionUseCase } from '../../domain/usecase/create-transaction.usecase';
 import { MarkTransactionFailedUseCase } from '../../domain/usecase/mark-transaction-failed.usecase';
+import { UpdateTransactionStatusUseCase } from '../../domain/usecase/update-transaction-status.usecase';
 import { UpdateWompiReferenceUseCase } from '../../domain/usecase/update-wompi-reference.usecase';
+import { TransactionStatus } from '../../domain/enums/transaction-status.enum';
 
 @Injectable()
 export class TransactionsService {
@@ -13,6 +15,7 @@ export class TransactionsService {
     private readonly createPendingUseCase: CreatePendingTransactionUseCase,
     private readonly updateWompiReferenceUseCase: UpdateWompiReferenceUseCase,
     private readonly markTransactionFailedUseCase: MarkTransactionFailedUseCase,
+    private readonly updateTransactionStatusUseCase: UpdateTransactionStatusUseCase,
   ) {}
 
   async create(productId: string, quantity: number) {
@@ -61,6 +64,23 @@ export class TransactionsService {
     );
     if (result.ok) {
       return result.value;
+    }
+    throw result.error;
+  }
+
+  async updateStatus(transactionId: string, status: TransactionStatus) {
+    const result = await this.updateTransactionStatusUseCase.execute(
+      transactionId,
+      status,
+    );
+    if (result.ok) {
+      return result.value;
+    }
+    if (result.error instanceof NotFoundError) {
+      throw new NotFoundException(result.error.message);
+    }
+    if (result.error instanceof ValidationError) {
+      throw new BadRequestException(result.error.message);
     }
     throw result.error;
   }

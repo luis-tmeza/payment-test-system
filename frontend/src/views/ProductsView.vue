@@ -15,10 +15,17 @@ const products = computed<Product[]>(
 const loading = computed<boolean>(
   () => store.state.products.loading,
 );
+const error = computed<string | null>(
+  () => store.state.products.error,
+);
 
 onMounted(() => {
   store.dispatch('products/fetchProducts');
 });
+
+const retry = () => {
+  store.dispatch('products/fetchProducts');
+};
 
 const buy = (product: Product) => {
   store.dispatch('products/selectProduct', product);
@@ -38,6 +45,17 @@ const buy = (product: Product) => {
 
     <v-row v-if="loading" justify="center">
       <v-progress-circular indeterminate />
+    </v-row>
+
+    <v-row v-else-if="error" justify="center">
+      <v-col cols="12">
+        <v-alert type="error" variant="tonal" class="mb-4">
+          {{ error }}
+        </v-alert>
+        <v-btn color="primary" block @click="retry">
+          Reintentar
+        </v-btn>
+      </v-col>
     </v-row>
 
     <v-row v-else>

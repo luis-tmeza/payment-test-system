@@ -1,6 +1,8 @@
 import { api } from '@/api/backend';
 import type { ActionContext } from 'vuex';
 
+export type WompiStatus = 'PENDING' | 'APPROVED' | 'DECLINED' | 'VOIDED' | 'ERROR';
+
 export interface PaymentTransaction {
   productId: string;
   quantity: number;
@@ -9,8 +11,11 @@ export interface PaymentTransaction {
   total: number;
   baseFee: number;
   deliveryFee: number;
-  status: 'pending' | 'success' | 'failed';
+  status: WompiStatus;
   createdAt: string;
+  wompiReferenceId?: string;
+  wompiTransactionId?: string;
+  backendTransactionId?: string;
 }
 
 interface PaymentState {
@@ -115,7 +120,7 @@ const actions = {
       total: payload.total,
       baseFee: payload.baseFee,
       deliveryFee: payload.deliveryFee,
-      status: 'pending',
+      status: 'PENDING',
       createdAt: new Date().toISOString(),
     };
 
@@ -128,7 +133,7 @@ const actions = {
     });
   },
   async pay(
-    { commit }: ActionContext<PaymentState, unknown>,
+    { commit, dispatch, state }: ActionContext<PaymentState, unknown>,
     payload: unknown,
   ) {
     commit('SET_LOADING', true);
@@ -136,15 +141,94 @@ const actions = {
     commit('SET_SUCCESS', false);
 
     try {
-      await api.post('/payments/pay', payload);
-      commit('SET_SUCCESS', true);
-      commit('SET_TRANSACTION_STATUS', 'success');
+      const response = await api.post('/payments/pay', payload);
+      const data = response?.data ?? {};
+      const backendTransactionId = data.transactionId;
+      const wompiTransactionId = data.wompiTransactionId;
+      const rawStatus = data.status as string | undefined;
+      const normalizedStatus = (rawStatus || 'PENDING').toUpperCase() as WompiStatus;
+
+      if (state.transaction) {
+        commit('SET_TRANSACTION', {
+          ...state.transaction,
+          backendTransactionId,
+          wompiTransactionId,
+          status: normalizedStatus,
+        });
+      }
+
+      if (normalizedStatus === 'PENDING' && !wompiTransactionId) {
+        commit('SET_ERROR', 'No se pudo obtener el id de la transacción.');
+        commit('SET_TRANSACTION_STATUS', 'ERROR');
+        commit('SET_SUCCESS', false);
+        return;
+      }
+
+      if (normalizedStatus && normalizedStatus !== 'PENDING') {
+        await dispatch('syncFinalStatus', {
+          status: normalizedStatus,
+          backendTransactionId,
+        });
+      }
     } catch {
-      commit('SET_ERROR', 'Payment failed');
-      commit('SET_TRANSACTION_STATUS', 'failed');
+      commit('SET_ERROR', 'No se pudo procesar el pago.');
+      commit('SET_TRANSACTION_STATUS', 'ERROR');
     } finally {
       commit('SET_LOADING', false);
     }
+  },
+  async syncFinalStatus(
+    { commit }: ActionContext<PaymentState, unknown>,
+    payload: { status: WompiStatus; backendTransactionId?: string },
+  ) {
+    commit('SET_TRANSACTION_STATUS', payload.status);
+
+    if (payload.status === 'APPROVED') {
+      commit('SET_SUCCESS', true);
+      commit('SET_ERROR', null);
+    } else {
+      commit('SET_SUCCESS', false);
+      commit('SET_ERROR', `Pago ${payload.status}`);
+    }
+
+    if (payload.backendTransactionId) {
+      await api.patch(
+        `/transactions/${payload.backendTransactionId}/status`,
+        { status: payload.status },
+      );
+    }
+  },
+  async pollWompiStatus(
+    { dispatch, commit }: ActionContext<PaymentState, unknown>,
+    payload: { wompiTransactionId: string; backendTransactionId?: string },
+  ) {
+    const pollIntervalMs = 2000;
+    const maxAttempts = 30;
+
+    for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+      const response = await api.get(
+        `https://api-sandbox.co.uat.wompi.dev/v1/transactions/${payload.wompiTransactionId}`,
+      );
+      const status = response?.data?.data?.status as WompiStatus | undefined;
+
+      if (status && status !== 'PENDING') {
+        await dispatch('syncFinalStatus', {
+          status,
+          backendTransactionId: payload.backendTransactionId,
+        });
+        return;
+      }
+
+      await new Promise((resolve) => {
+        setTimeout(resolve, pollIntervalMs);
+      });
+    }
+
+    await dispatch('syncFinalStatus', {
+      status: 'ERROR',
+      backendTransactionId: payload.backendTransactionId,
+    });
+    commit('SET_ERROR', 'Tiempo de espera consultando el estado del pago.');
   },
 };
 

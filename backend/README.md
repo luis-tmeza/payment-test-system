@@ -63,6 +63,23 @@ npm run test:e2e
 npm run test:cov
 ```
 
+## Pruebas y cobertura (backend)
+Fecha de ejecucion: 2026-02-02
+
+Comandos ejecutados:
+- `npm run test`
+
+Resultado:
+- Test suites: 30 passed, 30 total
+- Tests: 105 passed, 105 total
+- Fallos: ninguno
+
+Cobertura (Jest --coverage):
+- Statements: 99.76%
+- Branches: 85.06%
+- Functions: 100%
+- Lines: 99.73%
+
 ## Endpoints
 Base URL: `http://localhost:3000`
 
@@ -80,6 +97,17 @@ Body:
 }
 ```
 
+
+- `PATCH /transactions/{id}/status`
+
+Body:
+```json
+{
+  "status": "APPROVED"
+}
+```
+Nota: si el status es APPROVED, se descuenta el stock.
+
 ### Pagos
 - `GET /payments/acceptance-token` -> token de aceptacion de Wompi
 - `POST /payments/pay`
@@ -93,6 +121,8 @@ Body:
   "email": "user@example.com"
 }
 ```
+Nota: `POST /payments/pay` no descuenta stock. El stock se descuenta cuando se confirma el pago con `PATCH /transactions/{id}/status`.
+
 
 ## Seed de productos
 La semilla solo se ejecuta si `SEED_ON_START=true`.
@@ -114,3 +144,4 @@ La semilla solo se ejecuta si `SEED_ON_START=true`.
 
 ## Licencia
 UNLICENSED
+

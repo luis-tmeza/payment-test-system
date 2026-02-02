@@ -29,7 +29,6 @@ describe('PayUseCase', () => {
   it('returns NotFoundError when product is missing', async () => {
     const productRepository = {
       findActiveById: jest.fn().mockResolvedValue(null),
-      save: jest.fn(),
     };
     const transactionRepository = { create: jest.fn(), update: jest.fn() };
     const paymentGateway = { getAcceptanceToken: jest.fn(), createCardPayment: jest.fn() };
@@ -48,7 +47,6 @@ describe('PayUseCase', () => {
 
     expect(result.ok).toBe(false);
     expect(result.ok ? null : result.error).toBeInstanceOf(NotFoundError);
-    expect(productRepository.save).not.toHaveBeenCalled();
   });
 
   it('returns ValidationError when stock is insufficient', async () => {
@@ -58,7 +56,6 @@ describe('PayUseCase', () => {
         price: 100,
         stock: 0,
       }),
-      save: jest.fn(),
     };
     const transactionRepository = { create: jest.fn(), update: jest.fn() };
     const paymentGateway = { getAcceptanceToken: jest.fn(), createCardPayment: jest.fn() };
@@ -77,7 +74,6 @@ describe('PayUseCase', () => {
 
     expect(result.ok).toBe(false);
     expect(result.ok ? null : result.error).toBeInstanceOf(ValidationError);
-    expect(productRepository.save).not.toHaveBeenCalled();
   });
 
   it('creates a payment and returns the result', async () => {
@@ -86,11 +82,6 @@ describe('PayUseCase', () => {
         id: 'p-1',
         price: 200,
         stock: 5,
-      }),
-      save: jest.fn().mockResolvedValue({
-        id: 'p-1',
-        price: 200,
-        stock: 3,
       }),
     };
     const transactionRepository = {
@@ -126,11 +117,6 @@ describe('PayUseCase', () => {
       email: 'user@test.com',
     });
 
-    expect(productRepository.save).toHaveBeenCalledWith({
-      id: 'p-1',
-      price: 200,
-      stock: 3,
-    });
     expect(transactionRepository.create).toHaveBeenCalledWith({
       productId: 'p-1',
       quantity: 2,
@@ -163,11 +149,6 @@ describe('PayUseCase', () => {
         price: 200,
         stock: 5,
       }),
-      save: jest.fn().mockResolvedValue({
-        id: 'p-1',
-        price: 200,
-        stock: 3,
-      }),
     };
     const transactionRepository = {
       create: jest.fn().mockResolvedValue({
@@ -199,12 +180,6 @@ describe('PayUseCase', () => {
       email: 'user@test.com',
     });
 
-    expect(productRepository.save).toHaveBeenCalledTimes(2);
-    expect(productRepository.save).toHaveBeenLastCalledWith({
-      id: 'p-1',
-      price: 200,
-      stock: 5,
-    });
     expect(transactionRepository.update).toHaveBeenCalledWith('tx-1', {
       status: TransactionStatus.DECLINED,
     });

@@ -17,6 +17,7 @@ describe('TransactionsService', () => {
       { execute: jest.fn() } as any,
       { execute: jest.fn() } as any,
       { execute: jest.fn() } as any,
+      { execute: jest.fn() } as any,
     );
 
     await expect(service.create('p-1', 1)).resolves.toEqual({ id: 'tx-1' });
@@ -31,6 +32,7 @@ describe('TransactionsService', () => {
     };
     const service = new TransactionsService(
       createTransactionUseCase as any,
+      { execute: jest.fn() } as any,
       { execute: jest.fn() } as any,
       { execute: jest.fn() } as any,
       { execute: jest.fn() } as any,
@@ -53,6 +55,7 @@ describe('TransactionsService', () => {
       { execute: jest.fn() } as any,
       { execute: jest.fn() } as any,
       { execute: jest.fn() } as any,
+      { execute: jest.fn() } as any,
     );
 
     await expect(service.create('p-1', 1)).rejects.toBeInstanceOf(
@@ -67,6 +70,7 @@ describe('TransactionsService', () => {
     };
     const service = new TransactionsService(
       createTransactionUseCase as any,
+      { execute: jest.fn() } as any,
       { execute: jest.fn() } as any,
       { execute: jest.fn() } as any,
       { execute: jest.fn() } as any,
@@ -87,6 +91,7 @@ describe('TransactionsService', () => {
       createPendingUseCase as any,
       { execute: jest.fn() } as any,
       { execute: jest.fn() } as any,
+      { execute: jest.fn() } as any,
     );
 
     await expect(service.createPending('p-1', 1, 100)).resolves.toEqual({
@@ -104,6 +109,7 @@ describe('TransactionsService', () => {
       createPendingUseCase as any,
       { execute: jest.fn() } as any,
       { execute: jest.fn() } as any,
+      { execute: jest.fn() } as any,
     );
 
     await expect(service.createPending('p-1', 1, 100)).rejects.toBe(error);
@@ -117,6 +123,7 @@ describe('TransactionsService', () => {
       { execute: jest.fn() } as any,
       { execute: jest.fn() } as any,
       updateWompiReferenceUseCase as any,
+      { execute: jest.fn() } as any,
       { execute: jest.fn() } as any,
     );
 
@@ -135,6 +142,7 @@ describe('TransactionsService', () => {
       { execute: jest.fn() } as any,
       updateWompiReferenceUseCase as any,
       { execute: jest.fn() } as any,
+      { execute: jest.fn() } as any,
     );
 
     await expect(
@@ -151,6 +159,7 @@ describe('TransactionsService', () => {
       { execute: jest.fn() } as any,
       { execute: jest.fn() } as any,
       markTransactionFailedUseCase as any,
+      { execute: jest.fn() } as any,
     );
 
     await expect(service.markAsFailed('tx-1')).resolves.toBeUndefined();
@@ -166,9 +175,83 @@ describe('TransactionsService', () => {
       { execute: jest.fn() } as any,
       { execute: jest.fn() } as any,
       markTransactionFailedUseCase as any,
+      { execute: jest.fn() } as any,
     );
 
     await expect(service.markAsFailed('tx-1')).rejects.toBe(error);
+  });
+
+  it('updates status when successful', async () => {
+    const updateTransactionStatusUseCase = {
+      execute: jest.fn().mockResolvedValue({ ok: true, value: undefined }),
+    };
+    const service = new TransactionsService(
+      { execute: jest.fn() } as any,
+      { execute: jest.fn() } as any,
+      { execute: jest.fn() } as any,
+      { execute: jest.fn() } as any,
+      updateTransactionStatusUseCase as any,
+    );
+
+    await expect(
+      service.updateStatus('tx-1', 'APPROVED' as any),
+    ).resolves.toBeUndefined();
+  });
+
+  it('maps updateStatus not found errors', async () => {
+    const updateTransactionStatusUseCase = {
+      execute: jest
+        .fn()
+        .mockResolvedValue({ ok: false, error: new NotFoundError('missing') }),
+    };
+    const service = new TransactionsService(
+      { execute: jest.fn() } as any,
+      { execute: jest.fn() } as any,
+      { execute: jest.fn() } as any,
+      { execute: jest.fn() } as any,
+      updateTransactionStatusUseCase as any,
+    );
+
+    await expect(
+      service.updateStatus('tx-1', 'APPROVED' as any),
+    ).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it('maps updateStatus validation errors', async () => {
+    const updateTransactionStatusUseCase = {
+      execute: jest
+        .fn()
+        .mockResolvedValue({ ok: false, error: new ValidationError('bad') }),
+    };
+    const service = new TransactionsService(
+      { execute: jest.fn() } as any,
+      { execute: jest.fn() } as any,
+      { execute: jest.fn() } as any,
+      { execute: jest.fn() } as any,
+      updateTransactionStatusUseCase as any,
+    );
+
+    await expect(
+      service.updateStatus('tx-1', 'APPROVED' as any),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('rethrows updateStatus errors', async () => {
+    const error = new Error('fail');
+    const updateTransactionStatusUseCase = {
+      execute: jest.fn().mockResolvedValue({ ok: false, error }),
+    };
+    const service = new TransactionsService(
+      { execute: jest.fn() } as any,
+      { execute: jest.fn() } as any,
+      { execute: jest.fn() } as any,
+      { execute: jest.fn() } as any,
+      updateTransactionStatusUseCase as any,
+    );
+
+    await expect(
+      service.updateStatus('tx-1', 'APPROVED' as any),
+    ).rejects.toBe(error);
   });
 
   it('loads decorators when Reflect is missing', () => {

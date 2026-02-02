@@ -60,7 +60,7 @@ watch(quantity, (val) => {
         <p class="font-weight-medium">
           {{ product?.name }}
         </p>
-        <p class="text-caption">$ {{ product?.price }}</p>
+        <p class="text-caption">{{ formatCOP(product?.price ?? 0) }}</p>
       </v-card-text>
     </v-card>
 

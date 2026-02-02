@@ -12,6 +12,7 @@ const expYear = ref('')
 const cvc = ref('')
 const holder = ref('')
 const loading = ref(false)
+const errorMessage = ref<string | null>(null)
 
 const cardBrand = computed(() => {
   if (!cardNumber.value) return null;
@@ -36,6 +37,7 @@ watch(
 
 const tokenize = async () => {
   loading.value = true
+  errorMessage.value = null
 
   try {
     const response = await axios.post(
@@ -74,6 +76,14 @@ const tokenize = async () => {
       </v-toolbar>
 
       <v-card-text>
+        <v-alert
+          v-if="errorMessage"
+          type="error"
+          variant="tonal"
+          class="mb-3"
+        >
+          {{ errorMessage }}
+        </v-alert>
         <v-row justify="center" class="mb-3" v-if="cardBrand">
           <v-img
             :src="`/cards/${cardBrand}.svg`"
@@ -101,3 +111,4 @@ const tokenize = async () => {
     </v-card>
   </v-dialog>
 </template>
+

@@ -72,28 +72,16 @@ export class PayUseCase {
       return ok<PayContext>({ request, product, amount });
     });
 
-    const withStockReduced = await andThenAsync(withProduct, async (ctx) => {
-      await this.productRepository.save({
-        ...ctx.product,
-        stock: ctx.product.stock - ctx.request.quantity,
+    const withTransaction = await andThenAsync(withProduct, async (ctx) => {
+      const transaction = await this.transactionRepository.create({
+        productId: ctx.product.id,
+        quantity: ctx.request.quantity,
+        amount: ctx.amount.toString(),
+        status: TransactionStatus.PENDING,
       });
 
-      return ok(ctx);
+      return ok<PayContextWithTransaction>({ ...ctx, transaction });
     });
-
-    const withTransaction = await andThenAsync(
-      withStockReduced,
-      async (ctx) => {
-        const transaction = await this.transactionRepository.create({
-          productId: ctx.product.id,
-          quantity: ctx.request.quantity,
-          amount: ctx.amount.toString(),
-          status: TransactionStatus.PENDING,
-        });
-
-        return ok<PayContextWithTransaction>({ ...ctx, transaction });
-      },
-    );
 
     const withPayment = await andThenAsync(
       withTransaction,
@@ -116,12 +104,7 @@ export class PayUseCase {
           });
 
           return ok({ ...ctx, wompiTransaction });
-        } catch (error) {
-          await this.productRepository.save({
-            ...ctx.product,
-            stock: ctx.product.stock,
-          });
-
+        } catch {
           await this.transactionRepository.update(ctx.transaction.id, {
             status: TransactionStatus.DECLINED,
           });

@@ -4,4 +4,5 @@ export interface TransactionRepositoryPort {
   create(data: Partial<Transaction>): Promise<Transaction>;
   save(transaction: Transaction): Promise<Transaction>;
   update(id: string, data: Partial<Transaction>): Promise<void>;
+  findById(id: string): Promise<Transaction | null>;
 }

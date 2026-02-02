@@ -52,6 +52,29 @@ describe('TransactionRepositoryAdapter', () => {
     });
   });
 
+  it('finds a transaction by id', async () => {
+    const repo = {
+      findOne: jest.fn().mockResolvedValue({ id: 'tx-1', status: 'PENDING' }),
+    };
+    const adapter = new TransactionRepositoryAdapter(repo as any);
+
+    const result = await adapter.findById('tx-1');
+
+    expect(repo.findOne).toHaveBeenCalledWith({ where: { id: 'tx-1' } });
+    expect(result).toEqual({ id: 'tx-1', status: 'PENDING' });
+  });
+
+  it('returns null when transaction is missing', async () => {
+    const repo = {
+      findOne: jest.fn().mockResolvedValue(null),
+    };
+    const adapter = new TransactionRepositoryAdapter(repo as any);
+
+    const result = await adapter.findById('tx-1');
+
+    expect(result).toBeNull();
+  });
+
   it('loads decorators when Reflect is missing', () => {
     const originalReflect = (global as { Reflect?: unknown }).Reflect;
     (global as { Reflect?: unknown }).Reflect = undefined;

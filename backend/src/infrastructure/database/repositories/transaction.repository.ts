@@ -29,4 +29,12 @@ export class TransactionRepositoryAdapter implements TransactionRepositoryPort {
   async update(id: string, data: Partial<Transaction>): Promise<void> {
     await this.transactionRepository.update(id, data);
   }
+
+  async findById(id: string): Promise<Transaction | null> {
+    const transaction = await this.transactionRepository.findOne({
+      where: { id },
+    });
+
+    return transaction ? { ...transaction } : null;
+  }
 }
