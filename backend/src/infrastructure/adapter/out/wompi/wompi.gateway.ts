@@ -51,7 +51,9 @@ export class WompiGatewayAdapter implements PaymentGatewayPort {
 
   async getAcceptanceToken(): Promise<AcceptanceToken> {
     const baseUrl = this.configService.get<string>('WOMPI_URL') as string;
-    const publicKey = this.configService.get<string>('WOMPI_PUBLIC_KEY') as string;
+    const publicKey = this.configService.get<string>(
+      'WOMPI_PUBLIC_KEY',
+    ) as string;
 
     const response: AxiosResponse<MerchantResponse> = await axios.get(
       `${baseUrl}/merchants/${publicKey}`,
@@ -64,9 +66,13 @@ export class WompiGatewayAdapter implements PaymentGatewayPort {
     return { acceptanceToken: token, acceptanceTokenPersonal: tokenPersonal };
   }
 
-  async createCardPayment(params: CardPaymentParams): Promise<CardPaymentResult> {
+  async createCardPayment(
+    params: CardPaymentParams,
+  ): Promise<CardPaymentResult> {
     const baseUrl = this.configService.get<string>('WOMPI_URL') as string;
-    const privateKey = this.configService.get<string>('WOMPI_PRIVATE_KEY') as string;
+    const privateKey = this.configService.get<string>(
+      'WOMPI_PRIVATE_KEY',
+    ) as string;
 
     const signature = this.generateSignature(
       params.amountInCents,
