@@ -2,7 +2,7 @@ import axios from 'axios';
 
 const readViteEnv = () => {
   try {
-    // eslint-disable-next-line no-new-func
+     
     const meta = new Function('return import.meta')() as {
       env?: { VITE_API_BASE_URL?: string };
     };
@@ -15,5 +15,5 @@ const readViteEnv = () => {
 const envBaseUrl = readViteEnv();
 
 export const api = axios.create({
-  baseURL: envBaseUrl ?? 'http://localhost:3000',
+  baseURL: envBaseUrl ?? 'https://payment-test-system-production.up.railway.app',
 });
