@@ -4,6 +4,7 @@ import { NotFoundError } from '../errors/not-found.error';
 import { ValidationError } from '../errors/validation.error';
 import { ProductRepositoryPort } from '../ports/product-repository.port';
 import { TransactionRepositoryPort } from '../ports/transaction-repository.port';
+import { Result, andThenAsync, err, ok } from '../rop/result';
 
 export class CreateTransactionUseCase {
   constructor(
@@ -11,29 +12,49 @@ export class CreateTransactionUseCase {
     private readonly transactionRepository: TransactionRepositoryPort,
   ) {}
 
-  async execute(productId: string, quantity: number): Promise<Transaction> {
-    const product = await this.productRepository.findActiveById(productId);
+  async execute(
+    productId: string,
+    quantity: number,
+  ): Promise<Result<Transaction, NotFoundError | ValidationError>> {
+    const withProduct = await andThenAsync(
+      ok({ productId, quantity }),
+      async (input) => {
+        const product = await this.productRepository.findActiveById(
+          input.productId,
+        );
 
-    if (!product) {
-      throw new NotFoundError('Product not found');
-    }
+        if (!product) {
+          return err(new NotFoundError('Product not found'));
+        }
 
-    if (product.stock < quantity) {
-      throw new ValidationError('Insufficient stock');
-    }
+        if (product.stock < input.quantity) {
+          return err(new ValidationError('Insufficient stock'));
+        }
 
-    await this.productRepository.save({
-      ...product,
-      stock: product.stock - quantity,
+        const amount = Number(product.price) * input.quantity;
+
+        return ok({ ...input, product, amount });
+      },
+    );
+
+    const withStockReduced = await andThenAsync(withProduct, async (input) => {
+      await this.productRepository.save({
+        ...input.product,
+        stock: input.product.stock - input.quantity,
+      });
+
+      return ok(input);
     });
 
-    const amount = Number(product.price) * quantity;
+    return andThenAsync(withStockReduced, async (input) => {
+      const transaction = await this.transactionRepository.create({
+        productId: input.productId,
+        quantity: input.quantity,
+        amount: input.amount.toString(),
+        status: TransactionStatus.PENDING,
+      });
 
-    return this.transactionRepository.create({
-      productId,
-      quantity,
-      amount: amount.toString(),
-      status: TransactionStatus.PENDING,
+      return ok(transaction);
     });
   }
 }

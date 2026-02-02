@@ -16,31 +16,52 @@ export class TransactionsService {
   ) {}
 
   async create(productId: string, quantity: number) {
-    try {
-      return await this.createTransactionUseCase.execute(productId, quantity);
-    } catch (error) {
-      if (error instanceof NotFoundError) {
-        throw new NotFoundException(error.message);
-      }
-      if (error instanceof ValidationError) {
-        throw new BadRequestException(error.message);
-      }
-      throw error;
+    const result = await this.createTransactionUseCase.execute(
+      productId,
+      quantity,
+    );
+    if (result.ok) {
+      return result.value;
     }
+    if (result.error instanceof NotFoundError) {
+      throw new NotFoundException(result.error.message);
+    }
+    if (result.error instanceof ValidationError) {
+      throw new BadRequestException(result.error.message);
+    }
+    throw result.error;
   }
 
   async createPending(productId: string, quantity: number, amount: number) {
-    return this.createPendingUseCase.execute(productId, quantity, amount);
+    const result = await this.createPendingUseCase.execute(
+      productId,
+      quantity,
+      amount,
+    );
+    if (result.ok) {
+      return result.value;
+    }
+    throw result.error;
   }
 
   async updateWompiReference(transactionId: string, wompiReference: string) {
-    return this.updateWompiReferenceUseCase.execute(
+    const result = await this.updateWompiReferenceUseCase.execute(
       transactionId,
       wompiReference,
     );
+    if (result.ok) {
+      return result.value;
+    }
+    throw result.error;
   }
 
   async markAsFailed(transactionId: string) {
-    return this.markTransactionFailedUseCase.execute(transactionId);
+    const result = await this.markTransactionFailedUseCase.execute(
+      transactionId,
+    );
+    if (result.ok) {
+      return result.value;
+    }
+    throw result.error;
   }
 }

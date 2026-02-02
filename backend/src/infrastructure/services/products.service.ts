@@ -16,32 +16,46 @@ export class ProductsService {
   ) {}
 
   async findAll(): Promise<Product[]> {
-    return this.listProducts.execute();
+    const result = await this.listProducts.execute();
+    if (result.ok) {
+      return result.value;
+    }
+    throw result.error;
   }
 
   async findOne(id: string): Promise<Product | null> {
-    return this.getProduct.execute(id);
+    const result = await this.getProduct.execute(id);
+    if (result.ok) {
+      return result.value;
+    }
+    return null;
   }
 
   async decreaseStock(productId: string, quantity: number) {
-    try {
-      return await this.decreaseStockUseCase.execute(productId, quantity);
-    } catch (error) {
-      if (error instanceof NotFoundError) {
-        throw new NotFoundException(error.message);
-      }
-      throw error;
+    const result = await this.decreaseStockUseCase.execute(
+      productId,
+      quantity,
+    );
+    if (result.ok) {
+      return result.value;
     }
+    if (result.error instanceof NotFoundError) {
+      throw new NotFoundException(result.error.message);
+    }
+    throw result.error;
   }
 
   async increaseStock(productId: string, quantity: number) {
-    try {
-      return await this.increaseStockUseCase.execute(productId, quantity);
-    } catch (error) {
-      if (error instanceof NotFoundError) {
-        throw new NotFoundException(error.message);
-      }
-      throw error;
+    const result = await this.increaseStockUseCase.execute(
+      productId,
+      quantity,
+    );
+    if (result.ok) {
+      return result.value;
     }
+    if (result.error instanceof NotFoundError) {
+      throw new NotFoundException(result.error.message);
+    }
+    throw result.error;
   }
 }

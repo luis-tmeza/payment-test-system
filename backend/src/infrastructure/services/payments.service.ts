@@ -17,20 +17,24 @@ export class PaymentsService {
   ) {}
 
   async getAcceptanceToken(): Promise<AcceptanceToken> {
-    return this.getAcceptanceTokenUseCase.execute();
+    const result = await this.getAcceptanceTokenUseCase.execute();
+    if (result.ok) {
+      return result.value;
+    }
+    throw result.error;
   }
 
   async pay(data: PayRequest): Promise<PayResult> {
-    try {
-      return await this.payUseCase.execute(data);
-    } catch (error) {
-      if (error instanceof NotFoundError) {
-        throw new NotFoundException(error.message);
-      }
-      if (error instanceof ValidationError) {
-        throw new BadRequestException(error.message);
-      }
-      throw error;
+    const result = await this.payUseCase.execute(data);
+    if (result.ok) {
+      return result.value;
     }
+    if (result.error instanceof NotFoundError) {
+      throw new NotFoundException(result.error.message);
+    }
+    if (result.error instanceof ValidationError) {
+      throw new BadRequestException(result.error.message);
+    }
+    throw result.error;
   }
 }
