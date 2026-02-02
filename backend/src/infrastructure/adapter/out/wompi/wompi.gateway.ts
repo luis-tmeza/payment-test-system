@@ -80,29 +80,45 @@ export class WompiGatewayAdapter implements PaymentGatewayPort {
       params.reference,
     );
 
-    const response = await axios.post<WompiTransactionResponse>(
-      `${baseUrl}/transactions`,
-      {
-        amount_in_cents: params.amountInCents,
-        currency: 'COP',
-        customer_email: params.email,
-        payment_method: {
-          type: 'CARD',
-          token: params.cardToken,
-          installments: 1,
+    try {
+      const response = await axios.post<WompiTransactionResponse>(
+        `${baseUrl}/transactions`,
+        {
+          amount_in_cents: params.amountInCents,
+          currency: 'COP',
+          customer_email: params.email,
+          payment_method: {
+            type: 'CARD',
+            token: params.cardToken,
+            installments: 1,
+          },
+          reference: params.reference,
+          acceptance_token: params.acceptanceToken,
+          accept_personal_auth: params.acceptanceTokenPersonal,
+          signature,
         },
-        reference: params.reference,
-        acceptance_token: params.acceptanceToken,
-        accept_personal_auth: params.acceptanceTokenPersonal,
-        signature,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${privateKey}`,
+        {
+          headers: {
+            Authorization: `Bearer ${privateKey}`,
+          },
         },
-      },
-    );
+      );
 
-    return response.data.data;
+      return response.data.data;
+    } catch (error: any) {
+      const status = error?.response?.status;
+      const data = error?.response?.data;
+      console.error('Wompi createCardPayment failed', {
+        status,
+        data,
+        reference: params.reference,
+      });
+      const message =
+        data?.error?.message ||
+        data?.error?.reason ||
+        data?.message ||
+        'Unknown error from Wompi';
+      throw new Error(`Wompi transaction failed: ${status || 'N/A'} ${message}`);
+    }
   }
 }

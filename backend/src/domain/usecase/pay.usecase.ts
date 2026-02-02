@@ -104,12 +104,14 @@ export class PayUseCase {
           });
 
           return ok({ ...ctx, wompiTransaction });
-        } catch {
+        } catch (error) {
           await this.transactionRepository.update(ctx.transaction.id, {
             status: TransactionStatus.DECLINED,
           });
 
-          return err(new ValidationError('Payment processing failed'));
+          const message =
+            error instanceof Error ? error.message : 'Payment processing failed';
+          return err(new ValidationError(message));
         }
       },
     );
